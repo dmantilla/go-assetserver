@@ -34,6 +34,8 @@ func TestLoad(t *testing.T) {
 		So(aws["access_key"], ShouldEqual, "access_key_value")
 		So(aws["secret_key"], ShouldEqual, "secret_key_value")
 		So(aws["assets_bucket"], ShouldEqual, "bucket_name")
+
+		So(config.Address, ShouldEqual, ":4000")
 	})
 }
 

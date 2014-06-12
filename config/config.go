@@ -7,6 +7,7 @@ import (
 
 type Configuration struct {
 	AWS interface {}
+	Address string
 }
 
 func FileName() string {
