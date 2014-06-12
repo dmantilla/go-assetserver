@@ -6,7 +6,7 @@ import (
 
 // In development run like:
 //
-//   $ go build main.go && FILES_ENV=environment ./main
+//   $ go build imageserver.go && FILES_ENV=environment ./imageserver
 func main() {
 	server.Run()
 }
