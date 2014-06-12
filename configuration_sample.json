@@ -3,5 +3,6 @@
     "access_key": "access_key_value",
     "secret_key": "secret_key_value",
     "assets_bucket": "bucket_name"
-  }
+  },
+  "Address": ":4000"
 }
