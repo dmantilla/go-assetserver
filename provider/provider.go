@@ -5,12 +5,9 @@ import (
 	"github.com/mitchellh/goamz/s3"
 	"net/http"
 	"bytes"
+	"strconv"
+	"../transformer"
 )
-
-type Generic interface {
-	GetAsset(string, string) ([]byte, error)
-	WriteAsset(string, string, http.ResponseWriter) (error)
-}
 
 type Amazon struct {
 	auth aws.Auth
@@ -31,18 +28,40 @@ func (amazon Amazon) GetAsset(bucketName string, name string) ([]byte, error) {
 	return bucket.Get(name)
 }
 
-func (amazon Amazon) WriteAsset(bucketName string, assetName string, w http.ResponseWriter) (err error) {
-	var data []byte
+func (amazon Amazon) WriteAsset(bucketName string, assetName string, response http.ResponseWriter, request *http.Request) (err error) {
+	var data, image []byte
+
 	if data, err = amazon.GetAsset(bucketName, assetName); err != nil { return }
 
+	resizeRequired, width, height := ResizeRequired(request)
+	if resizeRequired {
+		if image, err = transformer.Resize(data, width, height); err != nil { return }
+		WriteData(image, response)
+	} else {
+		WriteData(data, response)
+	}
+	return
+}
+
+func WriteData(data []byte, response http.ResponseWriter) {
 	body := bytes.NewBuffer(data)
 	buffer := make([]byte, 1024)
-
 	for n, e := body.Read(buffer) ; e == nil ; n, e	= body.Read(buffer) {
 		if n > 0 {
-			w.Write(buffer[0:n])
+			response.Write(buffer[0:n])
 		}
 	}
+}
 
+func ResizeRequired(r *http.Request) (isRequired bool, width uint, height uint) {
+	var err error
+	var w, h uint64
+
+	values := r.URL.Query()
+	if w, err = strconv.ParseUint(values.Get("w"), 10, 0); err != nil { w = 0 }
+	if h, err = strconv.ParseUint(values.Get("h"), 10, 0); err != nil { h = 0 }
+	width = uint(w)
+	height = uint(h)
+	isRequired = width > 20 && height > 20
 	return
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"github.com/gographics/imagick/imagick"
 	"../config"
 	"../provider"
 )
@@ -13,12 +14,16 @@ var cfg config.Configuration
 var amazon provider.Amazon
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Query())
 	fmt.Println(AssetName(r))
-	amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(r), w)
+	amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(r), w, r)
 }
 
 func Run() {
 	var err error
+
+	imagick.Initialize()
+	defer imagick.Terminate()
 
 	dir := currentDir()
 	cfg, err = config.Load(dir)
