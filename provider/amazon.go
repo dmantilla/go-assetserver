@@ -12,14 +12,15 @@ import (
 type Amazon struct {
 	auth aws.Auth
 	connection *s3.S3
+	cache CacheProvider
 }
 
-func AWSConnect(access_key string, secret_key string) (amazon Amazon, err error) {
+func AWSConnect(access_key string, secret_key string, cacheFolder string) (amazon Amazon, err error) {
 	var auth aws.Auth
 	if auth, err = aws.GetAuth(access_key, secret_key); err != nil { return }
 
 	connection := s3.New(auth, aws.USEast)
-	amazon = Amazon{auth: auth, connection: connection}
+	amazon = Amazon{auth: auth, connection: connection, cache: CacheConnect(cacheFolder)}
 	return
 }
 
@@ -28,10 +29,19 @@ func (amazon Amazon) GetAsset(bucketName string, name string) ([]byte, error) {
 	return bucket.Get(name)
 }
 
+func (amazon Amazon) ReadAsset(bucketName string, assetName string) (data []byte, err error) {
+	// Try to grab the file from the cache
+	if data, err = amazon.cache.GetFile(assetName); err != nil {
+		// If not found go to Amazon
+		data, err = amazon.GetAsset(bucketName, assetName)
+	}
+	return
+}
+
 func (amazon Amazon) WriteAsset(bucketName string, assetName string, response http.ResponseWriter, request *http.Request) (err error) {
 	var data, image []byte
 
-	if data, err = amazon.GetAsset(bucketName, assetName); err != nil { return }
+	if data, err = amazon.ReadAsset(bucketName, assetName); err != nil { return }
 
 	resizeRequired, width, height := ResizeRequired(request)
 	if resizeRequired {
