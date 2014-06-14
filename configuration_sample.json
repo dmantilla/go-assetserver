@@ -4,5 +4,8 @@
     "secret_key": "secret_key_value",
     "assets_bucket": "bucket_name"
   },
-  "Address": ":4000"
+  "Address": ":4000",
+  "Cache": {
+    "folder": "/tmp"
+  }
 }

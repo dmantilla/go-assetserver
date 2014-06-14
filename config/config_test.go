@@ -49,3 +49,12 @@ func TestAwsNode(t *testing.T) {
 		So(config.AwsNode("assets_bucket"), ShouldEqual, "bucket_name")
 	})
 }
+
+func TestCacheNode(t *testing.T) {
+	Convey("return the right values", t, func() {
+			os.Setenv("FILES_ENV", "configuration_sample")
+			config, _ := Load("..")
+
+			So(config.CacheNode("folder"), ShouldEqual, "/tmp")
+		})
+}

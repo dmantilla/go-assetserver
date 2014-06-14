@@ -8,6 +8,7 @@ import (
 type Configuration struct {
 	AWS interface {}
 	Address string
+	Cache interface {}
 }
 
 func FileName() string {
@@ -26,4 +27,8 @@ func Load(path string) (config Configuration, err error) {
 
 func (config *Configuration) AwsNode(key string) string {
 	return config.AWS.(map[string]interface {})[key].(string)
+}
+
+func (config *Configuration) CacheNode(key string) string {
+	return config.Cache.(map[string]interface {})[key].(string)
 }
