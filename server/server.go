@@ -17,7 +17,7 @@ var amazon provider.Amazon
 var logger *log.Logger
 
 func handler(response http.ResponseWriter, request *http.Request) {
-	defer timeTrack(time.Now(), request.Method + " " + request.URL.Path)
+	defer timeTrack(time.Now(), request.Method + " " + request.URL.Path + "&" + request.URL.RawQuery)
 	amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(request), response, request)
 }
 
