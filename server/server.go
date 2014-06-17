@@ -18,7 +18,11 @@ var logger *log.Logger
 
 func handler(response http.ResponseWriter, request *http.Request) {
 	defer timeTrack(time.Now(), request.Method + " " + request.URL.Path + "&" + request.URL.RawQuery)
-	amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(request), response, request)
+	err := amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(request), response, request)
+	if err != nil {
+		logger.Printf("ERROR: %s", err)
+		http.Error(response, "Resource not found", 404)
+	}
 }
 
 func createLog() {
@@ -39,7 +43,7 @@ func loadConfiguration() {
 func connectToAmazon() {
 	var err error
 
-	amazon, err = provider.AWSConnect(cfg.AwsNode("access_key"), cfg.AwsNode("secret_key"), cfg.CacheNode("folder"))
+	amazon, err = provider.AWSConnect(cfg.AwsNode("access_key"), cfg.AwsNode("secret_key"), cfg.CacheNode("folder"), logger)
 	if err != nil {
 		fmt.Println("Cannot connect to Amazon")
 		os.Exit(1)
@@ -60,7 +64,7 @@ func Run() {
 	connectToAmazon()
 
 	http.HandleFunc("/", handler)
-	fmt.Println("Running...")
+	fmt.Printf("Running on %s...\n", cfg.Address)
 	http.ListenAndServe(cfg.Address, nil)
 }
 

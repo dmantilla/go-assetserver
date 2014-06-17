@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"bytes"
 	"strconv"
+	"log"
 	"../transformer"
 )
 
@@ -13,14 +14,15 @@ type Amazon struct {
 	auth aws.Auth
 	connection *s3.S3
 	cache CacheProvider
+	logger *log.Logger
 }
 
-func AWSConnect(access_key string, secret_key string, cacheFolder string) (amazon Amazon, err error) {
+func AWSConnect(access_key string, secret_key string, cacheFolder string, logger *log.Logger) (amazon Amazon, err error) {
 	var auth aws.Auth
 	if auth, err = aws.GetAuth(access_key, secret_key); err != nil { return }
 
 	connection := s3.New(auth, aws.USEast)
-	amazon = Amazon{auth: auth, connection: connection, cache: CacheConnect(cacheFolder)}
+	amazon = Amazon{auth: auth, connection: connection, cache: CacheConnect(cacheFolder), logger: logger}
 	return
 }
 
@@ -32,8 +34,10 @@ func (amazon Amazon) GetAsset(bucketName string, name string) ([]byte, error) {
 func (amazon Amazon) ReadAsset(bucketName string, assetName string) (data []byte, err error) {
 	// Try to grab the file from the cache
 	if data, err = amazon.cache.GetFile(assetName); err != nil {
-		// If not found go to Amazon
-		data, err = amazon.GetAsset(bucketName, assetName)
+		// If not found go to Amazon and cache the asset
+		if data, err = amazon.GetAsset(bucketName, assetName); err == nil {
+			err = amazon.cache.WriteFile(assetName, data)
+		}
 	}
 	return
 }
@@ -45,7 +49,7 @@ func (amazon Amazon) WriteAsset(bucketName string, assetName string, response ht
 
 	resizeRequired, width, height := ResizeRequired(request)
 	if resizeRequired {
-		if image, err = transformer.Resize(data, width, height); err != nil { return }
+		if image, err = transformer.Resize(data, height, width); err != nil { return }
 		WriteData(image, response)
 	} else {
 		WriteData(data, response)
