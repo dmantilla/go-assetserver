@@ -11,8 +11,11 @@ type Configuration struct {
 	Cache interface {}
 }
 
-func FileName() string {
-	if fn := os.Getenv("FILES_ENV"); fn == "" { return "development.json" } else { return fn + ".json" }
+func FileName() (filename string) {
+	if fn := os.Getenv("FILES_ENV"); fn == "" {
+		filename = "development.json"
+	} else { filename = fn + ".json" }
+	return
 }
 
 func Load(path string) (config Configuration, err error) {
