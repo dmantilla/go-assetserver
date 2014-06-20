@@ -47,6 +47,8 @@ func TestAwsNode(t *testing.T) {
 		So(config.AwsNode("access_key"), ShouldEqual, "access_key_value")
 		So(config.AwsNode("secret_key"), ShouldEqual, "secret_key_value")
 		So(config.AwsNode("assets_bucket"), ShouldEqual, "bucket_name")
+		So(config.AwsNode("rails_s3_url"), ShouldEqual, "http://s3.amazonaws.com/rails_bucket")
+		So(config.AwsNode("legacy_s3_url"), ShouldEqual, "http://s3.amazonaws.com/legacy_bucket")
 	})
 }
 

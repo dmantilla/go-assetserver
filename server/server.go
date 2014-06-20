@@ -10,15 +10,17 @@ import (
 	"github.com/gographics/imagick/imagick"
 	"../config"
 	"../provider"
+	"../asset"
 )
 
 var cfg config.Configuration
 var amazon provider.Amazon
+var cache provider.CacheProvider
 var logger *log.Logger
 
 func handler(response http.ResponseWriter, request *http.Request) {
 	defer timeTrack(time.Now(), request.Method + " " + request.URL.Path + "&" + request.URL.RawQuery)
-	err := amazon.WriteAsset(cfg.AwsNode("assets_bucket"), AssetName(request), response, request)
+	err := asset.WriteResponse(request, response, &amazon, &cache)
 	if err != nil {
 		logger.Printf("ERROR: %s", err)
 		http.Error(response, "Resource not found", 404)
@@ -43,11 +45,15 @@ func loadConfiguration() {
 func connectToAmazon() {
 	var err error
 
-	amazon, err = provider.AWSConnect(cfg.AwsNode("access_key"), cfg.AwsNode("secret_key"), cfg.CacheNode("folder"), logger)
+	amazon, err = provider.AWSConnect(cfg, logger)
 	if err != nil {
 		fmt.Println("Cannot connect to Amazon")
 		os.Exit(1)
 	}
+}
+
+func connectToCache() {
+	cache = provider.CacheConnect(cfg)
 }
 
 func timeTrack(start time.Time, message string) {
@@ -62,14 +68,11 @@ func Run() {
 	createLog()
 	loadConfiguration()
 	connectToAmazon()
+	connectToCache()
 
 	http.HandleFunc("/", handler)
 	fmt.Printf("Running on %s...\n", cfg.Address)
 	http.ListenAndServe(cfg.Address, nil)
-}
-
-func AssetName(r *http.Request) string {
-	return r.URL.Path[1:]
 }
 
 func currentDir() (dir string) {

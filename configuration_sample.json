@@ -2,7 +2,9 @@
   "AWS": {
     "access_key": "access_key_value",
     "secret_key": "secret_key_value",
-    "assets_bucket": "bucket_name"
+    "assets_bucket": "bucket_name",
+    "rails_s3_url": "http://s3.amazonaws.com/rails_bucket",
+    "legacy_s3_url": "http://s3.amazonaws.com/legacy_bucket"
   },
   "Address": ":4000",
   "Cache": {

@@ -2,48 +2,25 @@ package provider
 
 import (
 	"testing"
-	"net/http"
-	"net/url"
+	"log"
+	"os"
+	"../config"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestResizeRequired(t *testing.T) {
-	Convey("Determine if an image has to be resized or not", t, func() {
-		Convey("No query parameters, resize not required", func() {
-			url := url.URL{RawQuery:""}
-			r := http.Request{URL: &url }
-			isRequired, _, _ := ResizeRequired(&r)
-			So(isRequired, ShouldEqual, false)
+func TestAmazon(t *testing.T) {
+	os.Setenv("FILES_ENV", "configuration_sample")
+	cfg, _ := config.Load("..")
+	logger := log.New(os.Stdout, "", log.Ldate)
+	amazon, _ := AWSConnect(cfg, logger)
+
+	Convey("SourceURL", t, func() {
+		Convey("it's a rails asset", func() {
+			So(amazon.SourceURL("/original/3929.jpg"), ShouldEqual, "http://s3.amazonaws.com/rails_bucket")
+		})
+		Convey("it's another asset", func() {
+			So(amazon.SourceURL("/akd9939329.jpg"), ShouldEqual, "http://s3.amazonaws.com/legacy_bucket")
 		})
 
-		Convey("Only one width, resize not required", func() {
-			url := url.URL{RawQuery:"w=50"}
-			r := http.Request{URL: &url }
-			isRequired, _, _ := ResizeRequired(&r)
-			So(isRequired, ShouldEqual, false)
-		})
-
-		Convey("Only one height, resize not required", func() {
-			url := url.URL{RawQuery:"h=50"}
-			r := http.Request{URL: &url }
-			isRequired, _, _ := ResizeRequired(&r)
-			So(isRequired, ShouldEqual, false)
-		})
-
-		Convey("Both dimensions, but one less than the minimum, don't resize", func() {
-			url := url.URL{RawQuery:"w=100&h=20"}
-			r := http.Request{URL: &url }
-			isRequired, _, _ := ResizeRequired(&r)
-			So(isRequired, ShouldEqual, false)
-		})
-
-		Convey("Both dimensions, resize!", func() {
-			url := url.URL{RawQuery:"w=50&h=80"}
-			r := http.Request{URL: &url }
-			isRequired, w, h := ResizeRequired(&r)
-			So(isRequired, ShouldEqual, true)
-			So(w, ShouldEqual, 50)
-			So(h, ShouldEqual, 80)
-		})
 	})
 }

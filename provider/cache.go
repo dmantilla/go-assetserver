@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"../config"
 )
 
 type CacheProvider struct {
@@ -12,8 +13,8 @@ type CacheProvider struct {
 	entries []os.FileInfo
 }
 
-func CacheConnect(cacheFolder string) CacheProvider {
-	return CacheProvider{folderFullPath: cacheFolder}
+func CacheConnect(cfg config.Configuration) CacheProvider {
+	return CacheProvider{folderFullPath: cfg.CacheNode("folder")}
 }
 
 func (cache CacheProvider) GetFile(fileName string) (file []byte, err error) {

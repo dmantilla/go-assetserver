@@ -4,10 +4,11 @@ import (
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"net/http"
-	"bytes"
-	"strconv"
 	"log"
-	"../transformer"
+	"io/ioutil"
+	"strings"
+	"fmt"
+	"../config"
 )
 
 type Amazon struct {
@@ -15,14 +16,23 @@ type Amazon struct {
 	connection *s3.S3
 	cache CacheProvider
 	logger *log.Logger
+	railsS3URL string
+	legacyS3URL string
 }
 
-func AWSConnect(access_key string, secret_key string, cacheFolder string, logger *log.Logger) (amazon Amazon, err error) {
+func AWSConnect(cfg config.Configuration, logger *log.Logger) (amazon Amazon, err error) {
 	var auth aws.Auth
-	if auth, err = aws.GetAuth(access_key, secret_key); err != nil { return }
+	if auth, err = aws.GetAuth(cfg.AwsNode("access_key"), cfg.AwsNode("secret_key")); err != nil { return }
 
 	connection := s3.New(auth, aws.USEast)
-	amazon = Amazon{auth: auth, connection: connection, cache: CacheConnect(cacheFolder), logger: logger}
+	amazon = Amazon{
+		auth: auth,
+		connection: connection,
+		cache: CacheConnect(cfg),
+		logger: logger,
+		railsS3URL: cfg.AwsNode("rails_s3_url"),
+		legacyS3URL: cfg.AwsNode("legacy_s3_url"),
+	}
 	return
 }
 
@@ -42,40 +52,27 @@ func (amazon Amazon) ReadAsset(bucketName string, assetName string) (data []byte
 	return
 }
 
-func (amazon Amazon) WriteAsset(bucketName string, assetName string, response http.ResponseWriter, request *http.Request) (err error) {
-	var data, image []byte
-
-	if data, err = amazon.ReadAsset(bucketName, assetName); err != nil { return }
-
-	resizeRequired, width, height := ResizeRequired(request)
-	if resizeRequired {
-		if image, err = transformer.Resize(data, height, width); err != nil { return }
-		WriteData(image, response)
+func (amazon Amazon) SourceURL(assetName string) (sourceUrl string) {
+	if strings.Index(assetName, "/original") == 0 {
+		sourceUrl = amazon.railsS3URL
 	} else {
-		WriteData(data, response)
+		sourceUrl = amazon.legacyS3URL
 	}
 	return
 }
 
-func WriteData(data []byte, response http.ResponseWriter) {
-	body := bytes.NewBuffer(data)
-	buffer := make([]byte, 1024)
-	for n, e := body.Read(buffer) ; e == nil ; n, e	= body.Read(buffer) {
-		if n > 0 {
-			response.Write(buffer[0:n])
+func (amazon Amazon) FetchAsset(assetName string) (data []byte, err error) {
+	source := amazon.SourceURL(assetName)
+	var response *http.Response
+	resource := source + assetName
+	amazon.logger.Println(resource)
+	if response, err = http.Get(resource); err == nil {
+		if response.StatusCode == 200 {
+			defer response.Body.Close()
+			data, err = ioutil.ReadAll(response.Body)
+		} else {
+			err = fmt.Errorf("Resource %s not found", resource)
 		}
 	}
-}
-
-func ResizeRequired(r *http.Request) (isRequired bool, width uint, height uint) {
-	var err error
-	var w, h uint64
-
-	values := r.URL.Query()
-	if w, err = strconv.ParseUint(values.Get("w"), 10, 0); err != nil { w = 0 }
-	if h, err = strconv.ParseUint(values.Get("h"), 10, 0); err != nil { h = 0 }
-	width = uint(w)
-	height = uint(h)
-	isRequired = width > 20 && height > 20
 	return
 }
