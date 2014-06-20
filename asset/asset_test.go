@@ -9,11 +9,11 @@ import (
 
 func TestComputedName(t *testing.T) {
 	Convey("valid scenarios", t, func() {
-		a := New("/original/one.jpg", url.Values{}, nil, nil)
+		a := New("/original/one.jpg", url.Values{}, nil, nil, nil)
 		So(a.ComputedName(), ShouldEqual, "/original/one.jpg")
 	})
 	Convey("valid scenarios", t, func() {
-		a := New("/original/one.jpg", url.Values{"w": []string{"25"}, "h": []string{"30"}}, nil, nil)
+		a := New("/original/one.jpg", url.Values{"w": []string{"25"}, "h": []string{"30"}}, nil, nil, nil)
 		So(a.ComputedName(), ShouldEqual, "/original/one_30x25.jpg")
 	})
 }
@@ -21,44 +21,44 @@ func TestComputedName(t *testing.T) {
 func TestToBeResized(t *testing.T) {
 	Convey("true", t, func() {
 		q := url.Values{"w": []string{"21"}, "h": []string{"21"}}
-		a := New("/original/one.jpg", q, nil, nil)
+		a := New("/original/one.jpg", q, nil, nil, nil)
 		So(a.ToBeResized(), ShouldBeTrue)
 	})
 
 	Convey("false", t, func() {
 		Convey("width is blank", func() {
 			q := url.Values{"w": []string{""}, "h": []string{"20"}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("width is missing", func() {
 			q := url.Values{"h": []string{"20"}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("height is blank", func() {
 			q := url.Values{"w": []string{"40"}, "h": []string{""}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("height is missing", func() {
 			q := url.Values{"w": []string{"20"}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("both are blank", func() {
 			q := url.Values{"w": []string{""}, "h": []string{""}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("both are missing", func() {
 			q := url.Values{}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 		Convey("dimensions are invalid", func() {
 			q := url.Values{"w": []string{"20"}, "h": []string{"20"}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			So(a.ToBeResized(), ShouldBeFalse)
 		})
 	})
@@ -68,7 +68,7 @@ func TestRequestedDimensions(t *testing.T) {
 	Convey("Determine if an image has to be resized or not", t, func() {
 		Convey("No query parameters, resize not required", func() {
 			q := url.Values{"w": []string{"10"}, "h": []string{"20"}}
-			a := New("/original/one.jpg", q, nil, nil)
+			a := New("/original/one.jpg", q, nil, nil, nil)
 			w, h := a.RequestedDimensions()
 			So(w, ShouldEqual, 10)
 			So(h, ShouldEqual, 20)

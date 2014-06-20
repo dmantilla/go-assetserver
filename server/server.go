@@ -20,7 +20,7 @@ var logger *log.Logger
 
 func handler(response http.ResponseWriter, request *http.Request) {
 	defer timeTrack(time.Now(), request.Method + " " + request.URL.Path + "&" + request.URL.RawQuery)
-	err := asset.WriteResponse(request, response, &amazon, &cache)
+	err := asset.WriteResponse(request, response, &amazon, &cache, logger)
 	if err != nil {
 		logger.Printf("ERROR: %s", err)
 		http.Error(response, "Resource not found", 404)

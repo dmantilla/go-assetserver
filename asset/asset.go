@@ -10,37 +10,37 @@ import (
 	"bytes"
 	"log"
 	"../provider"
-	"../transformer"
+	"github.com/gographics/imagick/imagick"
 )
 
 type Asset struct {
-	path string
-	query url.Values
+	path   string
+	query  url.Values
 
 	data   []byte
 
 	amazon *provider.Amazon
 	cache  *provider.CacheProvider
+	logger *log.Logger
 }
 
-func WriteResponse(request *http.Request, response http.ResponseWriter, amazon *provider.Amazon, cache *provider.CacheProvider) (err error) {
-	a := Build(request, amazon, cache)
+func WriteResponse(request *http.Request, response http.ResponseWriter, amazon *provider.Amazon, cache *provider.CacheProvider, logger *log.Logger) (err error) {
+	a := Build(request, amazon, cache, logger)
 	err = a.Fetch()
 	a.Write(response)
 	return
 }
 
-func Build(request *http.Request, amazon *provider.Amazon, cache *provider.CacheProvider) Asset {
-	return New(request.URL.Path, Query(request), amazon, cache)
+func Build(request *http.Request, amazon *provider.Amazon, cache *provider.CacheProvider, logger *log.Logger) Asset {
+	return New(request.URL.Path, Query(request), amazon, cache, logger)
 }
 
-func New(path string, query url.Values, amazon *provider.Amazon, cache *provider.CacheProvider) Asset {
-	return Asset{path: path, query: query, amazon: amazon, cache: cache}
+func New(path string, query url.Values, amazon *provider.Amazon, cache *provider.CacheProvider, logger *log.Logger) Asset {
+	return Asset{path: path, query: query, amazon: amazon, cache: cache, logger: logger}
 }
 
 func (a *Asset) Write(response http.ResponseWriter) {
 	body := bytes.NewBuffer(a.data)
-	log.Printf("Data size: %d\n", len(a.data))
 	buffer := make([]byte, 1024)
 	for n, e := body.Read(buffer) ; e == nil ; n, e	= body.Read(buffer) {
 		if n > 0 {
@@ -50,13 +50,17 @@ func (a *Asset) Write(response http.ResponseWriter) {
 }
 func (a *Asset) FetchOriginalFromCloud() (err error) {
 	if a.data, err = a.amazon.FetchAsset(a.path); err == nil {
+		a.logger.Printf("Fetched original %s from cloud", a.path)
 		err = a.cache.WriteFile(a.path, a.data)
+		if err == nil { a.logger.Printf("%s cached", a.path) }
 	}
 	return
 }
 
 func (a *Asset) FetchOriginal() (err error) {
-	if a.data, err = a.cache.GetFile(a.path); err != nil {
+	if a.data, err = a.cache.GetFile(a.path); err == nil {
+		a.logger.Printf("Fetched original %s from cache", a.path)
+	} else {
 		err = a.FetchOriginalFromCloud()
 	}
 	return
@@ -65,13 +69,16 @@ func (a *Asset) FetchOriginal() (err error) {
 func (a *Asset) Fetch() (err error) {
 	// Look for requested file in cache
 	computedName := a.ComputedName()
-	if a.data, err = a.cache.GetFile(computedName); err != nil {
+	if a.data, err = a.cache.GetFile(computedName); err == nil {
+		a.logger.Printf("Serving %s from cache", computedName)
+	} else {
 		if a.ToBeResized() {
 			err = a.FetchOriginal()
 			if err == nil {
 				w, h := a.RequestedDimensions()
-				if a.data, err = transformer.Resize(a.data, w, h); err == nil {
+				if a.data, err = a.Resize(w, h); err == nil {
 					err = a.cache.WriteFile(computedName, a.data)
+					a.logger.Printf("%s cached", computedName)
 				}
 			}
 		} else {
@@ -103,6 +110,19 @@ func (a *Asset) RequestedDimensions() (uint, uint) {
 	w, _ = strconv.ParseUint(a.query.Get("w"), 10, 0)
 	h, _ = strconv.ParseUint(a.query.Get("h"), 10, 0)
 	return uint(w), uint(h)
+}
+
+func (a *Asset) Resize(width uint, height uint) (image []byte, err error) {
+	mw := imagick.NewMagickWand()
+	defer mw.Destroy()
+
+	if err = mw.ReadImageBlob(a.data); err != nil { return }
+	if err = mw.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1); err != nil { return }
+	if err = mw.SetImageCompressionQuality(95); err != nil { return }
+
+	image = mw.GetImageBlob()
+	a.logger.Printf("%s resized to %dx%d", a.path, width, height)
+	return
 }
 
 func SanitizeQueryParam(paramName string, value string) (result string, err error) {

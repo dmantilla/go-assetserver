@@ -52,7 +52,7 @@ func (amazon Amazon) FetchAsset(assetName string) (data []byte, err error) {
 	source := amazon.SourceURL(assetName)
 	var response *http.Response
 	resource := source + assetName
-	amazon.logger.Println(resource)
+	amazon.logger.Printf("Retrieving %s", resource)
 	if response, err = http.Get(resource); err == nil {
 		if response.StatusCode == 200 {
 			defer response.Body.Close()
