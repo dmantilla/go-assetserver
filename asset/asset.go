@@ -93,7 +93,7 @@ func (a *Asset) ComputedName() (result string) {
 	name := strings.Split(base, ".")[0]
 	ext := path.Ext(a.path)
 	if a.ToBeResized() {
-		result = fmt.Sprintf("%s%s_%sx%s%s", dir, name, a.query.Get("h"), a.query.Get("w"), ext)
+		result = fmt.Sprintf("%s%s_%sh_%sw%s", dir, name, a.query.Get("h"), a.query.Get("w"), ext)
 	} else {
 		result = fmt.Sprintf("%s%s%s", dir, name, ext)
 	}
@@ -121,7 +121,7 @@ func (a *Asset) Resize(width uint, height uint) (image []byte, err error) {
 	if err = mw.SetImageCompressionQuality(95); err != nil { return }
 
 	image = mw.GetImageBlob()
-	a.logger.Printf("%s resized to %dx%d", a.path, width, height)
+	a.logger.Printf("%s resized to %dx%d", a.path, height, width)
 	return
 }
 

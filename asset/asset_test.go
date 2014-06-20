@@ -14,7 +14,7 @@ func TestComputedName(t *testing.T) {
 	})
 	Convey("valid scenarios", t, func() {
 		a := New("/original/one.jpg", url.Values{"w": []string{"25"}, "h": []string{"30"}}, nil, nil, nil)
-		So(a.ComputedName(), ShouldEqual, "/original/one_30x25.jpg")
+		So(a.ComputedName(), ShouldEqual, "/original/one_30h_25w.jpg")
 	})
 }
 
