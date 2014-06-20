@@ -14,7 +14,6 @@ import (
 type Amazon struct {
 	auth aws.Auth
 	connection *s3.S3
-	cache CacheProvider
 	logger *log.Logger
 	railsS3URL string
 	legacyS3URL string
@@ -28,7 +27,6 @@ func AWSConnect(cfg config.Configuration, logger *log.Logger) (amazon Amazon, er
 	amazon = Amazon{
 		auth: auth,
 		connection: connection,
-		cache: CacheConnect(cfg),
 		logger: logger,
 		railsS3URL: cfg.AwsNode("rails_s3_url"),
 		legacyS3URL: cfg.AwsNode("legacy_s3_url"),
@@ -39,17 +37,6 @@ func AWSConnect(cfg config.Configuration, logger *log.Logger) (amazon Amazon, er
 func (amazon Amazon) GetAsset(bucketName string, name string) ([]byte, error) {
 	bucket := amazon.connection.Bucket(bucketName)
 	return bucket.Get(name)
-}
-
-func (amazon Amazon) ReadAsset(bucketName string, assetName string) (data []byte, err error) {
-	// Try to grab the file from the cache
-	if data, err = amazon.cache.GetFile(assetName); err != nil {
-		// If not found go to Amazon and cache the asset
-		if data, err = amazon.GetAsset(bucketName, assetName); err == nil {
-			err = amazon.cache.WriteFile(assetName, data)
-		}
-	}
-	return
 }
 
 func (amazon Amazon) SourceURL(assetName string) (sourceUrl string) {
