@@ -40,7 +40,7 @@ func (amazon Amazon) GetAsset(bucketName string, name string) ([]byte, error) {
 }
 
 func (amazon Amazon) SourceURL(assetName string) (sourceUrl string) {
-	if strings.Index(assetName, "/original") == 0 {
+	if strings.Index(assetName, "/regular") == 0 {
 		sourceUrl = amazon.railsS3URL
 	} else {
 		sourceUrl = amazon.legacyS3URL
@@ -49,7 +49,8 @@ func (amazon Amazon) SourceURL(assetName string) (sourceUrl string) {
 }
 
 func (amazon Amazon) FetchAsset(assetName string) (data []byte, err error) {
-	source := amazon.SourceURL(assetName)
+	// always using Rails to serve assets
+	source := amazon.railsS3URL
 	var response *http.Response
 	resource := source + assetName
 	amazon.logger.Printf("Retrieving %s", resource)

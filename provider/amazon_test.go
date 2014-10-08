@@ -16,7 +16,7 @@ func TestAmazon(t *testing.T) {
 
 	Convey("SourceURL", t, func() {
 		Convey("it's a rails asset", func() {
-			So(amazon.SourceURL("/original/3929.jpg"), ShouldEqual, "http://s3.amazonaws.com/rails_bucket")
+			So(amazon.SourceURL("/regular/3929.jpg"), ShouldEqual, "http://s3.amazonaws.com/rails_bucket")
 		})
 		Convey("it's another asset", func() {
 			So(amazon.SourceURL("/akd9939329.jpg"), ShouldEqual, "http://s3.amazonaws.com/legacy_bucket")
