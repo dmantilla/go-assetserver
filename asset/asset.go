@@ -107,8 +107,13 @@ func (a *Asset) ToBeResized() bool {
 
 func (a *Asset) RequestedDimensions() (uint, uint) {
 	var w, h uint64
-	w, _ = strconv.ParseUint(a.query.Get("w"), 10, 0)
-	h, _ = strconv.ParseUint(a.query.Get("h"), 10, 0)
+	qW := a.query.Get("w")
+	qH := a.query.Get("h")
+	if len(qW) == 0 { qW = a.query.Get("width") }
+	if len(qH) == 0 { qH = a.query.Get("height") }
+
+	w, _ = strconv.ParseUint(qW, 10, 0)
+	h, _ = strconv.ParseUint(qH, 10, 0)
 	return uint(w), uint(h)
 }
 

@@ -66,13 +66,30 @@ func TestToBeResized(t *testing.T) {
 
 func TestRequestedDimensions(t *testing.T) {
 	Convey("Determine if an image has to be resized or not", t, func() {
-		Convey("No query parameters, resize not required", func() {
+		Convey("Returns zeroes when no dimensions are provided", func() {
+			q := url.Values{}
+			a := New("/original/one.jpg", q, nil, nil, nil)
+			w, h := a.RequestedDimensions()
+			So(w, ShouldEqual, 0)
+			So(h, ShouldEqual, 0)
+			})
+
+		Convey("It accepts 'w' and 'h'", func() {
 			q := url.Values{"w": []string{"10"}, "h": []string{"20"}}
 			a := New("/original/one.jpg", q, nil, nil, nil)
 			w, h := a.RequestedDimensions()
 			So(w, ShouldEqual, 10)
 			So(h, ShouldEqual, 20)
 		})
+
+		Convey("Using aliases for 'w' and 'h'", func() {
+			q := url.Values{"width": []string{"100"}, "height": []string{"200"}}
+			a := New("/original/one.jpg", q, nil, nil, nil)
+			w, h := a.RequestedDimensions()
+			So(w, ShouldEqual, 100)
+			So(h, ShouldEqual, 200)
+		})
+
 	})
 }
 
