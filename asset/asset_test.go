@@ -14,7 +14,7 @@ func TestComputedName(t *testing.T) {
 	})
 	Convey("valid scenarios", t, func() {
 		a := New("/original/one.jpg", url.Values{"w": []string{"25"}, "h": []string{"30"}}, nil, nil, nil)
-		So(a.ComputedName(), ShouldEqual, "/original/one_30h_25w.jpg")
+		So(a.ComputedName(), ShouldEqual, "/original/one_25w_30h.jpg")
 	})
 }
 
@@ -128,6 +128,14 @@ func TestSanitizeQueryParam(t *testing.T) {
 			Convey("valid value provided", func() {
 					v, _ := SanitizeQueryParam("w", "250")
 					So(v, ShouldEqual, "250")
+				})
+			Convey("width value provided", func() {
+					v, _ := SanitizeQueryParam("width", "250")
+					So(v, ShouldEqual, "250")
+				})
+			Convey("height value provided", func() {
+					v, _ := SanitizeQueryParam("height", "125")
+					So(v, ShouldEqual, "125")
 				})
 		})
 	Convey("Returns error", t, func() {

@@ -93,7 +93,8 @@ func (a *Asset) ComputedName() (result string) {
 	name := strings.Split(base, ".")[0]
 	ext := path.Ext(a.path)
 	if a.ToBeResized() {
-		result = fmt.Sprintf("%s%s_%sh_%sw%s", dir, name, a.query.Get("h"), a.query.Get("w"), ext)
+		w, h := a.RequestedDimensions()
+		result = fmt.Sprintf("%s%s_%dw_%dh%s", dir, name, w, h, ext)
 	} else {
 		result = fmt.Sprintf("%s%s%s", dir, name, ext)
 	}
@@ -134,7 +135,7 @@ func SanitizeQueryParam(paramName string, value string) (result string, err erro
 	var unsigned_int uint64
 
 	switch paramName {
-	case "h", "w":
+	case "h", "w", "height", "width":
 		if unsigned_int, err = strconv.ParseUint(value, 10, 0); err == nil {
 			result = strconv.FormatUint(unsigned_int, 10)
 		} else { result = "0" }
