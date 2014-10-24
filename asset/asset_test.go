@@ -27,24 +27,24 @@ func TestToBeResized(t *testing.T) {
 
 	Convey("false", t, func() {
 		Convey("width is blank", func() {
-			q := url.Values{"w": []string{""}, "h": []string{"20"}}
+			q := url.Values{"w": []string{""}, "h": []string{"30"}}
 			a := New("/original/one.jpg", q, nil, nil, nil)
-			So(a.ToBeResized(), ShouldBeFalse)
+			So(a.ToBeResized(), ShouldBeTrue)
 		})
 		Convey("width is missing", func() {
-			q := url.Values{"h": []string{"20"}}
+			q := url.Values{"h": []string{"23"}}
 			a := New("/original/one.jpg", q, nil, nil, nil)
-			So(a.ToBeResized(), ShouldBeFalse)
+			So(a.ToBeResized(), ShouldBeTrue)
 		})
 		Convey("height is blank", func() {
 			q := url.Values{"w": []string{"40"}, "h": []string{""}}
 			a := New("/original/one.jpg", q, nil, nil, nil)
-			So(a.ToBeResized(), ShouldBeFalse)
+			So(a.ToBeResized(), ShouldBeTrue)
 		})
 		Convey("height is missing", func() {
-			q := url.Values{"w": []string{"20"}}
+			q := url.Values{"w": []string{"25"}}
 			a := New("/original/one.jpg", q, nil, nil, nil)
-			So(a.ToBeResized(), ShouldBeFalse)
+			So(a.ToBeResized(), ShouldBeTrue)
 		})
 		Convey("both are blank", func() {
 			q := url.Values{"w": []string{""}, "h": []string{""}}

@@ -71,7 +71,7 @@ func Run() {
 	connectToCache()
 
 	http.HandleFunc("/", handler)
-	fmt.Printf("Running on %s... v0.9.0\n", cfg.Address)
+	fmt.Printf("Running on %s... v0.9.1\n", cfg.Address)
 	http.ListenAndServe(cfg.Address, nil)
 }
 

@@ -103,7 +103,7 @@ func (a *Asset) ComputedName() (result string) {
 
 func (a *Asset) ToBeResized() bool {
 	w, h := a.RequestedDimensions()
-	return w > 20 && h > 20
+	return (w > 20 && h > 20) || (w > 20 && h == 0) || (w == 0 && h > 20)
 }
 
 func (a *Asset) RequestedDimensions() (uint, uint) {
@@ -123,6 +123,11 @@ func (a *Asset) Resize(width uint, height uint) (image []byte, err error) {
 	defer mw.Destroy()
 
 	if err = mw.ReadImageBlob(a.data); err != nil { return }
+	w := float64(mw.GetImageWidth())
+	h := float64(mw.GetImageHeight())
+	aspect_ratio := w / h
+	if (width == 0) { width = uint(float64(height) * aspect_ratio) }
+	if (height == 0) { height = uint(float64(width) / aspect_ratio) }
 	if err = mw.ResizeImage(width, height, imagick.FILTER_LANCZOS, 1); err != nil { return }
 	if err = mw.SetImageCompressionQuality(95); err != nil { return }
 
