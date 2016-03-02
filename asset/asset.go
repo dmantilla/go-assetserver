@@ -42,12 +42,14 @@ func New(path string, query url.Values, amazon *provider.Amazon, cache *provider
 func (a *Asset) Write(response http.ResponseWriter) {
 	body := bytes.NewBuffer(a.data)
 	buffer := make([]byte, 1024)
+	response.Header().Set("Cache-Control", "public, max-age=86400")
 	for n, e := body.Read(buffer) ; e == nil ; n, e	= body.Read(buffer) {
 		if n > 0 {
 			response.Write(buffer[0:n])
 		}
 	}
 }
+
 func (a *Asset) FetchOriginalFromCloud() (err error) {
 	if a.data, err = a.amazon.FetchAsset(a.path); err == nil {
 		a.logger.Printf("Fetched original %s from cloud", a.path)
